@@ -19,7 +19,7 @@ static double getStartTsByPath(const std::string& datadir) {
   const static std::map<std::string, double> start_ts_dict = {
       {"MH_01_easy", 1403636616}, {"MH_02_easy", 1403636886}, {"MH_03_medium", 0},   {"MH_04_difficult", 1403638143},
       {"MH_05_difficult", 0},     {"V1_01_easy", 0},          {"V1_02_medium", 0},   {"V1_03_difficult", 0},
-      {"V2_01_easy", 0},          {"V2_02_medium", 0},        {"V2_03_difficult", 0}};
+      {"V2_01_easy", 0},          {"V2_02_medium", 0},        {"V2_03_difficult", 0}, {"indoor_walking_loop_staticinit_1", 0}};
   for (const auto& it : start_ts_dict) {
     if (datadir.find(it.first) != datadir.npos) {
       return it.second;
@@ -32,7 +32,7 @@ static vs::vio::DatasetType getDatasetTypeByPath(const std::string& datadir) {
   const static std::vector<std::pair<std::vector<std::string>, vs::vio::DatasetType>> table = {
       // EuRoC dataset
       {{"MH_01_easy", "MH_02_easy", "MH_03_medium", "MH_04_difficult", "MH_05_difficult", "V1_01_easy", "V1_02_medium",
-        "V1_03_difficult", "V2_01_easy", "V2_02_medium", "V2_03_difficult"},
+        "V1_03_difficult", "V2_01_easy", "V2_02_medium", "V2_03_difficult", "indoor_walking_loop_staticinit_1"},
        vs::vio::DATASET_EUROC},
       //  ZJU_SenseTime VISLAM dataset
       {{"C0_train", "C1_train", "C2_train",  "C3_train",  "C4_train", "C5_train", "C6_train", "C7_train",
@@ -134,7 +134,7 @@ ov_msckf::VioManagerOptions paramEuroc() {
   params.state_options.do_calib_camera_intrinsics = true;
   params.state_options.do_calib_camera_timeoffset = true;
   params.state_options.max_clone_size = 11;
-  params.state_options.max_slam_features = 75;
+  params.state_options.max_slam_features = 120;
   params.state_options.max_slam_in_update = 25;
   params.state_options.max_msckf_in_update = 40;
   params.state_options.num_cameras = 1;
@@ -143,7 +143,7 @@ ov_msckf::VioManagerOptions paramEuroc() {
   params.init_imu_thresh = 1.5;
   params.gravity_mag = 9.81;
 
-  params.state_options.feat_rep_msckf = LandmarkRepresentation::Representation::GLOBAL_3D;
+  params.state_options.feat_rep_msckf = LandmarkRepresentation::Representation::GLOBAL_3D; // GLOBAL_3D
   params.state_options.feat_rep_slam = LandmarkRepresentation::Representation::ANCHORED_FULL_INVERSE_DEPTH;
   params.state_options.feat_rep_aruco = LandmarkRepresentation::Representation::ANCHORED_FULL_INVERSE_DEPTH;
 
@@ -154,8 +154,8 @@ ov_msckf::VioManagerOptions paramEuroc() {
   params.zupt_max_disparity = 0.5;
   params.zupt_only_at_beginning = false;
 
-  params.record_timing_information = false;
-  params.record_timing_filepath = "tmp/ov_timing.txt";
+  params.record_timing_information = true;
+  params.record_timing_filepath = "ov_timing.txt";
 
   params.use_klt = true;
   params.num_pts = 250;
@@ -174,28 +174,29 @@ ov_msckf::VioManagerOptions paramEuroc() {
   params.msckf_options.chi2_multipler = 1;
   params.slam_options.sigma_pix = 1;
   params.slam_options.chi2_multipler = 1;
-  params.imu_noises.sigma_w = 1.6968e-4;
-  params.imu_noises.sigma_a = 2.0000e-3;
-  params.imu_noises.sigma_wb = 1.9393e-5;
-  params.imu_noises.sigma_ab = 3.0000e-3;
+  params.imu_noises.sigma_w = 0.0009027784163640152;
+  params.imu_noises.sigma_a = 0.024897393835385112;
+  params.imu_noises.sigma_wb = 2.4275278973882224e-05;
+  params.imu_noises.sigma_ab = 0.0007759493757141297;
 
-  params.calib_camimu_dt = 0.0;
+  params.calib_camimu_dt = 0.019;
 
   if (1) {
     int id = 0;
     Eigen::Matrix<double, 8, 1> cam_calib;
-    cam_calib << 458.654, 457.296, 367.215, 248.375, -0.28340811, 0.07395907, 0.00019359, 1.76187114e-05;
+    cam_calib << 496.9221841793908, 496.67218249523825, 320.13043105863295, 241.12304842660265, 0.09708088672986548, -0.1239681334123083, 0.0007252678897896622, -0.0011050628113649548;
     Eigen::Matrix<double, 7, 1> cam_eigen;
     Eigen::Matrix4d T_CtoI;
-    T_CtoI << 0.0148655429818, -0.999880929698, 0.00414029679422, -0.0216401454975, 0.999557249008, 0.0149672133247,
-        0.025715529948, -0.064676986768, -0.0257744366974, 0.00375618835797, 0.999660727178, 0.00981073058949, 0.0, 0.0,
-        0.0, 1.0;
+    T_CtoI << -0.006063532176144445,  -0.9999505295708876, -0.007884921588129866,  -0.01524218382397658,
+             -0.9999811590170061, 0.006055797474662624, 0.0010044540565654248,   0.01814004967651823,
+          -0.0009566548775509129, 0.007890863567947756,   -0.9999684090428047, -0.003577311629924743,
+                             10.0,                  0.0,                   0.0,                   1.0;
     cam_eigen.block(0, 0, 4, 1) = rot_2_quat(T_CtoI.block(0, 0, 3, 3).transpose());
     cam_eigen.block(4, 0, 3, 1) = -T_CtoI.block(0, 0, 3, 3).transpose() * T_CtoI.block(0, 3, 3, 1);
     params.camera_fisheye.insert({id, false});
     params.camera_intrinsics.insert({id, cam_calib});
     params.camera_extrinsics.insert({id, cam_eigen});
-    params.camera_wh.insert({id, std::make_pair(752, 480)});
+    params.camera_wh.insert({id, std::make_pair(640, 480)});
   }
   if (params.use_stereo) {
     int id = 1;

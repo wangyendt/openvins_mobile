@@ -11,7 +11,9 @@
 using namespace ov_msckf;
 
 int main(int argc, char** argv) {
-  std::string datadir = argc > 1 ? argv[1] : "/home/symao/data/euroc/zip/MH_04_difficult";
+  // std::string datadir = argc > 1 ? argv[1] : "/home/symao/data/euroc/zip/MH_04_difficult";
+  // std::string datadir = argc > 1 ? argv[1] : "/media/psf/work/data/euroc_data/MH_01_easy";
+  std::string datadir = argc > 1 ? argv[1] : "/media/psf/work/data/slam/mate20/dataset/indoor_walking_loop_staticinit_1";
   bool mono = true;
   RunHandler hd;
   bool ok = hd.init(datadir, mono);
